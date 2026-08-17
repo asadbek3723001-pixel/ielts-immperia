@@ -10,20 +10,20 @@ initSocket(server);
 
 async function main() {
   console.log('[Server] Starting startup sequence...');
+  const HOST = '0.0.0.0';
+  
+  server.listen(ENV.PORT, HOST, () => {
+    console.log(`[Server] Listening on http://${HOST}:${ENV.PORT}`);
+    console.log(`[Server] Public URL expectation: ${process.env.RAILWAY_STATIC_URL || 'Not set'}`);
+    console.log(`[Server] Environment: ${ENV.NODE_ENV}`);
+  });
+
   try {
     console.log('[DB] Connecting to PostgreSQL...');
     await prisma.$connect();
     console.log('[DB] Connected successfully');
-
-    const HOST = '0.0.0.0';
-    server.listen(ENV.PORT, HOST, () => {
-      console.log(`[Server] Listening on http://${HOST}:${ENV.PORT}`);
-      console.log(`[Server] Public URL expectation: ${process.env.RAILWAY_STATIC_URL || 'Not set'}`);
-      console.log(`[Server] Environment: ${ENV.NODE_ENV}`);
-    });
   } catch (err) {
-    console.error('[Server] Fatal startup error:', err);
-    process.exit(1);
+    console.error('[DB] Connection warning/error:', err);
   }
 }
 
