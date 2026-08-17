@@ -6,9 +6,26 @@ import { JwtPayload } from '../types';
 
 let io: Server;
 
+const allowedOrigins = (ENV.CLIENT_URL || '')
+  .split(',')
+  .map(u => u.trim().replace(/^["']|["']$/g, ''))
+  .filter(Boolean);
+
 export function initSocket(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
-    cors: { origin: ENV.CLIENT_URL, credentials: true },
+    cors: {
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const cleanOrigin = origin.replace(/[\r\n\t]/g, '').trim();
+        const isAllowed = allowedOrigins.length === 0 || allowedOrigins.some(o => o === '*' || o === cleanOrigin);
+        if (isAllowed) {
+          callback(null, cleanOrigin);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
+    },
     pingTimeout: 60000,
   });
 

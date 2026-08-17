@@ -10,6 +10,7 @@ import studentRoutes from './routes/studentRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
+app.set('trust proxy', 1);
 console.log('[Express] Initializing middleware and routes...');
 
 app.use((req, res, next) => {
