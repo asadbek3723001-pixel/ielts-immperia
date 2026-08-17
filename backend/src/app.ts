@@ -25,19 +25,33 @@ const allowedOrigins = (ENV.CLIENT_URL || '')
   .map(u => u.trim().replace(/^["']|["']$/g, ''))
   .filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    const isAllowed = allowedOrigins.some(o => o === '*' || o === origin);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    const cleanOrigin = origin.replace(/[\r\n\t]/g, '').trim();
+    const isAllowed = allowedOrigins.length === 0 || allowedOrigins.some(o => o === '*' || o === cleanOrigin);
     if (isAllowed) {
-      callback(null, origin);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      try {
+        res.setHeader('Access-Control-Allow-Origin', cleanOrigin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      } catch (err) {
+        console.error('[CORS Header Error]', err);
+      }
     }
-  },
-  credentials: true,
-}));
+  } else {
+    try {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    } catch {}
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 2000 });
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 2000 });
