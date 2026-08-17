@@ -20,11 +20,18 @@ app.use((req, res, next) => {
 
 app.use(helmet({ contentSecurityPolicy: false }));
 
-const allowedOrigins = ENV.CLIENT_URL.split(',').map(u => u.trim());
+const allowedOrigins = (ENV.CLIENT_URL || '')
+  .split(',')
+  .map(u => u.trim().replace(/^["']|["']$/g, ''))
+  .filter(Boolean);
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some(o => o === origin || o === '*')) {
-      callback(null, true);
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOrigins.some(o => o === '*' || o === origin);
+    if (isAllowed) {
+      callback(null, origin);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
