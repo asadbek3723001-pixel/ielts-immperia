@@ -4,7 +4,7 @@
     "variantGroup": "15_20",
     "type": "gap_fill",
     "title": "Collocations: Adjectives and Verbs",
-    "instruction": "Fill in the gaps in the conversation with a word from the box and a preposition.",
+    "instruction": "Fill in the gaps in the conversation with a word from the box and a preposition.\n\nWord box: anxious | bad | choose | depend | effect | obsessed | rely | true | worried",
     "image": null,
     "passage": "Teacher: Do you think that money can solve all problems?\nStudent: No, not really. Of course, I would be 1 anxious about (anxious about) money if I didn't have very much, but I believe that too much money can be 2 [2] you.\nTeacher: So you think it is possible to have too much money?\nStudent: Well, there are lots of stories in the media about people who have won lots of money in the lottery and realised that they are not happier as a result. I think that large amounts of money can have a negative 3 [3] people.\nTeacher: Do you think that people 4 [4] modern technology like computers too much and that people are 5 [5] having the latest high tech equipment?\nStudent: Well, yes, in some countries. But this isn't 6 [6] many people in the world who are only 7 [7] their next meal. In rich countries people always want a new gadget to make life easier but I'm not sure these machines do actually do that. When we go shopping we have to 8 [8] hundreds of different brands of the same thing, and when these things go wrong we don't know what to do. I would prefer it if life were simpler and we didn't 9 [9] expensive technologies so much.",
     "questions": [
@@ -31,7 +31,7 @@
         {
             "id": 6,
             "text": "6. (not/many people):",
-            "answer": "true for"
+            "answer": "true for|||true of"
         },
         {
             "id": 7,

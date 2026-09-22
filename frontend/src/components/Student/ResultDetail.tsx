@@ -5,12 +5,15 @@ import { Result, StudentAnswer } from '../../types';
 import Loading from '../Common/Loading';
 
 // Extract exerciseId from questionId
-// Regular: "grammar_1_5_001_3" → "grammar_1_5_001"
-// Practice: "practice_vocabulary_1_5_001" → "practice_vocabulary_1_5_001"
+// Regular single: "grammar_1_5_001_3"  → "grammar_1_5_001"
+// Multi-blank:    "grammar_1_5_001_3_b0" → "grammar_1_5_001"
+// Practice:       "practice_vocabulary_1_5_001" → "practice_vocabulary_1_5_001"
 function extractExerciseId(questionId: string): string {
   if (questionId.startsWith('practice_')) return questionId;
-  const parts = questionId.split('_');
-  // Last part is the question number — remove it
+  // Strip multi-blank suffix (_b0, _b1, etc.) if present
+  const withoutBlank = questionId.replace(/_b\d+$/, '');
+  const parts = withoutBlank.split('_');
+  // Last part is the question number — remove it to get the exercise ID
   return parts.slice(0, -1).join('_');
 }
 

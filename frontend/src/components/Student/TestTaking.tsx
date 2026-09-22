@@ -41,7 +41,7 @@ export default function TestTaking() {
     }
   });
 
-  const { fatalStrike, isFullscreenExit } = useAntiCheat(testSessionId, phase === 'in-section' && rulesAccepted && !isExpelled);
+  const { fatalStrike, isFullscreenExit } = useAntiCheat(testSessionId, phase === 'in-section' && rulesAccepted && !isExpelled && !pendingSection);
 
   const handleAcceptRules = () => {
     try {
@@ -215,6 +215,13 @@ export default function TestTaking() {
     if (!pendingSection) return;
     goToNextSection(pendingSection);
     setPendingSection(null);
+    // Re-enter fullscreen after the section transition modal closes
+    // Small delay to let the DOM settle before requesting fullscreen
+    setTimeout(() => {
+      if (!document.fullscreenElement) {
+        enterFullscreen();
+      }
+    }, 300);
   }, [pendingSection, goToNextSection]);
 
   // ── Spinner while restoring ─────────────────────────────────────────────────
@@ -272,7 +279,7 @@ export default function TestTaking() {
       )}
 
       <FullscreenGuard
-        isEnabled={(phase === 'in-section' && rulesAccepted && !isExpelled) || isFullscreenExit}
+        isEnabled={(phase === 'in-section' && rulesAccepted && !isExpelled && !pendingSection) || (isFullscreenExit && !pendingSection)}
         onEnterFullscreen={enterFullscreen}
       />
 

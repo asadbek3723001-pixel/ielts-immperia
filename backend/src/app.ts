@@ -54,8 +54,20 @@ app.use((req, res, next) => {
   next();
 });
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 2000 });
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 2000 });
+// Rate limits configured for exam centers where many students share the same public IP/NAT
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15000, // Safe for 100+ students autosaving every 10s from the same IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === '/me', // /me is called on every page load/refresh
+});
 app.use('/api/auth', authLimiter);
 app.use(limiter);
 

@@ -12,13 +12,13 @@
             "id": 1,
             "text": "I want to get in touch with the woman which we met at the meeting last week.",
             "errorWord": "which",
-            "answer": "who"
+            "answer": "who|||whom"
         },
         {
             "id": 2,
             "text": "I'm sending this email to ask for more information about the language courses which I saw them advertised in The Daily Star yesterday.",
             "errorWord": "them",
-            "answer": " "
+            "answer": "omit|||delete|||-|||leave out|||remove|||no word"
         },
         {
             "id": 3,
@@ -30,13 +30,13 @@
             "id": 4,
             "text": "I really enjoyed the lecture which you gave it on Wednesday, and am thinking about doing my assignment on the same topic.",
             "errorWord": "it",
-            "answer": " "
+            "answer": "omit|||delete|||-|||leave out|||remove|||no word"
         },
         {
             "id": 5,
             "text": "It's the one which in you have written your lecture notes.",
             "errorWord": "which in",
-            "answer": "which you have written your lecture notes in"
+            "answer": "in which|||which you have written your lecture notes in"
         },
         {
             "id": 6,
@@ -48,7 +48,7 @@
             "id": 7,
             "text": "I want some of those bread rolls what we had last week.",
             "errorWord": "what",
-            "answer": "which"
+            "answer": "which|||that"
         },
         {
             "id": 8,

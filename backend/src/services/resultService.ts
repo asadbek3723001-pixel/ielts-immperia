@@ -1,29 +1,84 @@
 import prisma from '../config/database';
 import { SubmitAnswer } from '../types';
-import { getAnswerMap, clearAnswerMap } from './sessionService';
+import { clearAnswerMap } from './sessionService';
 import { loadAllExercises, loadExercisesFromGroups, loadPracticeQuestionsFromGroups } from '../utils/questionLoader';
 
-function gradeAnswer(selected: string, correct: string): boolean {
-  if (!selected || !correct) return false;
-
-  const sel = selected.trim().toLowerCase();
-  const cor = correct.trim().toLowerCase();
-
-  // Normalize checkmarks and spaces
-  const normalize = (s: string) => s
+export function normalizeAnswer(s: string): string {
+  if (!s) return '';
+  return s
+    .replace(/[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
     .replace(/[✔️✅☑️]/g, '✓')
-    .replace(/\s+/g, ' ') // Only reduce multiple spaces to one
+    .replace(/[\u2018\u2019`´]/g, "'")
+    .replace(/[\u201C\u201D„«»]/g, '"')
+    .replace(/[–—−]/g, '-')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+}
 
-  const nSel = normalize(sel);
+export function stripPunctuationEdges(s: string): string {
+  return s.replace(/^[\s.,;:!?"'()\[\]]+|[\s.,;:!?"'()\[\]]+$/g, '').trim();
+}
 
-  // Handle multiple accepted answers (pipe-separated)
-  if (cor.includes('|||')) {
-    return cor.split('|||').some(c => nSel === normalize(c.trim().toLowerCase()));
+export function expandContractions(s: string): string {
+  return s
+    .replace(/\bwon't\b/g, 'will not')
+    .replace(/\bcan't\b/g, 'can not')
+    .replace(/\bcannot\b/g, 'can not')
+    .replace(/\bshan't\b/g, 'shall not')
+    .replace(/n't\b/g, ' not')
+    .replace(/'ll\b/g, ' will')
+    .replace(/'ve\b/g, ' have')
+    .replace(/'re\b/g, ' are')
+    .replace(/'m\b/g, ' am')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function matchSingleCandidate(selected: string, correct: string): boolean {
+  const nSel = normalizeAnswer(selected);
+  const nCor = normalizeAnswer(correct);
+  if (!nSel || !nCor) return false;
+
+  // 1. Direct match
+  if (nSel === nCor) return true;
+
+  // 2. Trailing/leading punctuation stripped (e.g. "was playing." vs "was playing")
+  const sSel = stripPunctuationEdges(nSel);
+  const sCor = stripPunctuationEdges(nCor);
+  if (sSel && sCor && sSel === sCor) return true;
+
+  // 3. Hyphen vs space equivalence (e.g. "one-two" vs "one two", "eco-friendly" vs "eco friendly")
+  const spSel = sSel.replace(/-/g, ' ').replace(/\s+/g, ' ');
+  const spCor = sCor.replace(/-/g, ' ').replace(/\s+/g, ' ');
+  if (spSel === spCor) return true;
+
+  // 4. Contractions equivalence (e.g. "didn't" vs "did not", "cannot" vs "can not")
+  const exSel = expandContractions(spSel);
+  const exCor = expandContractions(spCor);
+  if (exSel === exCor) return true;
+
+  // 5. Unordered lists separated by semicolons or commas (e.g. "study; studies; student")
+  if (nCor.includes(';') || nCor.includes(',')) {
+    const listCor = nCor.split(/[;,]\s*/).map(x => stripPunctuationEdges(x)).filter(Boolean).sort();
+    const listSel = nSel.split(/[;,]\s*/).map(x => stripPunctuationEdges(x)).filter(Boolean).sort();
+    if (listCor.length > 1 && listCor.length === listSel.length && listCor.every((val, idx) => val === listSel[idx])) {
+      return true;
+    }
   }
 
-  return nSel === normalize(cor);
+  return false;
+}
+
+export function gradeAnswer(selected: string, correct: string): boolean {
+  if (!selected || !correct) return false;
+
+  // Split multiple accepted answers separated by |||, ||, or |
+  const candidates = correct.split(/\s*\|{1,3}\s*/).map(c => c.trim()).filter(Boolean);
+  if (candidates.length === 0) return false;
+
+  return candidates.some(cand => matchSingleCandidate(selected, cand));
 }
 
 export async function submitTest(studentId: string, testSessionId: string, answers: SubmitAnswer[]) {
@@ -126,7 +181,10 @@ export async function submitTest(studentId: string, testSessionId: string, answe
     }
   }
 
-  const userAnswersMap = new Map(answers.map(a => [a.questionId, a]));
+  // Merge database stored answers (from autosaves/advancing sections) with submitted answers
+  const dbAnswers: SubmitAnswer[] = JSON.parse(activeSession.answers || '[]');
+  const userAnswersMap = new Map(dbAnswers.map(a => [a.questionId, a]));
+  answers.forEach(a => userAnswersMap.set(a.questionId, a));
 
   let vocabCorrect = 0, vocabTotal = 0;
   let grammarCorrect = 0, grammarTotal = 0;
@@ -136,7 +194,7 @@ export async function submitTest(studentId: string, testSessionId: string, answe
     const selectedAnswer = userAns ? userAns.selectedAnswer : '';
 
     const correctAnswer = rq.exactAnswer;
-    const displayCorrect = correctAnswer.includes('|||') ? correctAnswer.split('|||')[0] : correctAnswer;
+    const displayCorrect = (correctAnswer.split(/\s*\|{1,3}\s*/)[0] || correctAnswer).trim();
     const isCorrect = selectedAnswer ? gradeAnswer(selectedAnswer, correctAnswer) : false;
 
     if (rq.questionType === 'VOCABULARY') {
@@ -145,10 +203,6 @@ export async function submitTest(studentId: string, testSessionId: string, answe
     } else {
       grammarTotal++;
       if (isCorrect) grammarCorrect++;
-    }
-
-    if (rq.questionId.includes('grammar_5_10_016')) {
-      console.log(`[Debug Mapping] RQ_ID: ${rq.questionId}, Found in Map: ${!!userAns}, Selected: "${selectedAnswer}"`);
     }
 
     return {

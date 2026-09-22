@@ -50,11 +50,7 @@ export default function LiveMonitoring() {
         timestamp: new Date().toISOString(),
       });
 
-      // Also show a direct browser alert if it's fatal to ensure admin noticed
-      if (isExpelled) {
-        console.warn(`CRITICAL: Student ${data.username} was expelled!`);
-        alert(`🚨 CHETLATILDI: ${data.username} (${label})`);
-      }
+      console.warn(`CRITICAL: Student ${data.username} was expelled!`);
 
       setSessions(prev =>
         prev.map(s => s.student.username === data.username
@@ -93,6 +89,7 @@ export default function LiveMonitoring() {
 
     return () => {
       socket.off('student_joined');
+      socket.off('student_violation');
       socket.off('tab_switch_detected');
       socket.off('student_submitted');
       socket.off('student_disconnected');

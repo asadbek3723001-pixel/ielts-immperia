@@ -54,8 +54,10 @@ export async function joinTest(studentId: string, pin: string) {
       if (!currentSection) throw new Error('Active section not found in test definition');
 
       const selectedExercisesMap: Record<string, string[]> = JSON.parse(existing.selectedExercises);
+      const selectedQuestionsMap: Record<string, string[]> = JSON.parse((existing as any).selectedQuestions || '{}');
       const exerciseIds = selectedExercisesMap[String(currentSection.sectionOrder)] || [];
-      const currentClientExercises = getClientContentForSection(currentSection, exerciseIds);
+      const allowedQuestions = selectedQuestionsMap[String(currentSection.sectionOrder)];
+      const currentClientExercises = getClientContentForSection(currentSection, exerciseIds, allowedQuestions);
 
       const resumeSectionType = (currentSection as unknown as { sectionType?: string }).sectionType || 'EXERCISE';
       return {

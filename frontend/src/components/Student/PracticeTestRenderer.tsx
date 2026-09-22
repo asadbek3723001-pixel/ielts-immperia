@@ -15,6 +15,7 @@ interface Props {
 export default function PracticeTestRenderer({ questions, subject, answers, onAnswer, onSubmit, submitting, isLast, onIndexChange }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const total = questions.length;
   const current = questions[currentIdx];
@@ -245,7 +246,7 @@ export default function PracticeTestRenderer({ questions, subject, answers, onAn
             </button>
           ) : (
             <button
-              onClick={onSubmit}
+              onClick={() => setShowConfirm(true)}
               disabled={submitting}
               className="flex-shrink-0 h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-black shadow-[0_2px_10px_rgba(5,150,105,0.4)] transition-all whitespace-nowrap flex items-center gap-1.5"
             >
@@ -268,6 +269,56 @@ export default function PracticeTestRenderer({ questions, subject, answers, onAn
           )}
         </div>
       </div>
+
+      {/* Submit / Finish Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 shadow-2xl backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden transform transition-all border border-gray-100 dark:border-gray-700 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-16 h-16 bg-amber-100 dark:bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {isLast ? 'Testni yakunlash' : "Bo'limni yakunlash"}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-[15px]">
+                {total - answeredCount > 0 ? (
+                  <span>
+                    Siz <strong className="text-amber-600 dark:text-amber-400 font-bold">{total - answeredCount} ta</strong> savolga javob bermadingiz. {isLast ? 'Testni haqiqatan ham yakunlamoqchimisiz?' : "Keyingi bo'limga o'tmoqchimisiz?"}
+                  </span>
+                ) : (
+                  <span>
+                    Barcha ({total} ta) savollarga javob berildi. {isLast ? "Testni yakunlab, natijalarni ko'rmoqchimisiz?" : "Ushbu bo'limni yakunlab, keyingisiga o'tmoqchimisiz?"}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 flex gap-3 flex-row-reverse border-t border-gray-100 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirm(false);
+                  onSubmit();
+                }}
+                disabled={submitting}
+                className="flex-1 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/30 disabled:opacity-50"
+              >
+                Ha, {isLast ? 'Yakunlash' : "Keyingi bo'lim"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                disabled={submitting}
+                className="flex-1 py-2.5 rounded-xl font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

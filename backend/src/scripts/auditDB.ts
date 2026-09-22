@@ -92,12 +92,23 @@ async function auditFile(filePath: string) {
                         });
                     }
 
+                    let expectedAnswersCount = 0;
+                    ex.questions.forEach(q => {
+                        const anyQ = q as Record<string, unknown>;
+                        const blankCount = (q.text || '').split('___').length - 1;
+                        if (blankCount > 1 && Array.isArray(anyQ.answers) && anyQ.answers.length > 1) {
+                            expectedAnswersCount += anyQ.answers.length;
+                        } else {
+                            expectedAnswersCount += 1;
+                        }
+                    });
+
                     if (totalGaps === 0 && ex.questions.length > 0) {
                         // Some exercises might be "write the form of word" without explicit markers
                         // We'll warn instead of erroring if there are no markers at all but questions exist
                         warnings.push(`Gap-fill exercise has no explicit markers ([N] or ___) in passage or question texts`);
-                    } else if (totalGaps > 0 && totalGaps !== ex.questions.length) {
-                        errors.push(`Gap count (${totalGaps}) does not match question count (${ex.questions.length})`);
+                    } else if (totalGaps > 0 && totalGaps !== expectedAnswersCount) {
+                        errors.push(`Gap count (${totalGaps}) does not match expected answers count (${expectedAnswersCount})`);
                     }
 
                     if (ex.passage && ex.passage.includes('___')) {
